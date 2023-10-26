@@ -1,7 +1,6 @@
 ---
 - name: Configure SNMP on Proxmox Hosts
-  hosts: cluster0
-  become: yes
+  hosts: hostlist
   tasks:
     - name: Install required packages
       apt:
