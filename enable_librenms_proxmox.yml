@@ -1,0 +1,51 @@
+---
+- name: Configure SNMP on Proxmox Hosts
+  hosts: cluster0
+  become: yes
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - libpve-apiclient-perl
+          - snmpd
+          - snmp
+          - libsnmp-dev
+        state: present
+
+    - name: Download and set permissions for proxmox script
+      get_url:
+        url: https://raw.githubusercontent.com/librenms/librenms-agent/master/agent-local/proxmox
+        dest: /usr/local/bin/proxmox
+        mode: '0755'
+
+    - name: Add Debian-snmp to sudoers for proxmox script
+      lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^Debian-snmp ALL='
+        line: 'Debian-snmp ALL=(ALL) NOPASSWD: /usr/local/bin/proxmox'
+        validate: 'visudo -cf %s'
+
+    - name: Stop snmpd service
+      service:
+        name: snmpd
+        state: stopped
+
+    - name: Create SNMPv3 user in /var/lib/snmp/snmpd.conf
+      lineinfile:
+        path: /var/lib/snmp/snmpd.conf
+        line: 'createUser user SHA "password" AES "cryptopassword"'
+        create: yes
+
+    - name: Create simplified snmpd.conf
+      template:
+        src: snmpd.conf.j2
+        dest: /etc/snmp/snmpd.conf
+      vars:
+        sysLocation: "{{ inventory_hostname }}"
+        sysContact: "name number"
+
+    - name: Start snmpd service
+      service:
+        name: snmpd
+        state: started
