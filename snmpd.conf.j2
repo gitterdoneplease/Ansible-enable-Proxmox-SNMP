@@ -1,0 +1,18 @@
+###########################################################################
+# snmpd.conf
+# Custom configuration for Proxmox hosts
+###########################################################################
+
+# System Information
+sysLocation    {{ sysLocation }}
+sysContact     {{ sysContact }}
+sysServices    72
+
+# Agent Operating Mode
+master  agentx
+agentAddress udp:161
+
+# Access Control
+view allview included .1 80
+rouser user authpriv -V allview
+extend proxmox /usr/bin/sudo /usr/local/bin/proxmox
